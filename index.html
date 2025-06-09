@@ -17,7 +17,7 @@
 <script type="text/babel">
     const { useState, useEffect } = React;
     
-    // Simple icon components using SVG
+    // Icon component
     const Icon = ({ name, className }) => {
         const icons = {
             'check-circle': 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
@@ -31,7 +31,12 @@
             'dollar-sign': 'M12 1v22M17 5H9.5a3.5 3.5 0 100 7h5a3.5 3.5 0 110 7H6',
             'share-2': 'M18 8a3 3 0 100-6 3 3 0 000 6zM6 15a3 3 0 100-6 3 3 0 000 6zM18 22a3 3 0 100-6 3 3 0 000 6zM8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98',
             'building-2': 'M3 21h18M5 21V7l8-4v18M19 21V11l-6-3',
-            'user-plus': 'M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M8 7a4 4 0 100-8 4 4 0 000 8zM20 8v6M23 11h-6'
+            'user-plus': 'M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M8 7a4 4 0 100-8 4 4 0 000 8zM20 8v6M23 11h-6',
+            'shield': 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z',
+            'gift': 'M20 12v10H4V12M2 7h20M12 22V7M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z',
+            'clipboard': 'M9 2a1 1 0 00-1 1H6a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2h-2a1 1 0 00-1-1H9zM9 2h6v2H9V2z',
+            'chevron-right': 'M9 18l6-6-6-6',
+            'x': 'M18 6L6 18M6 6l12 12'
         };
         
         return (
@@ -42,9 +47,22 @@
     };
 
     const LegacyCreationApp = () => {
+        const [activeView, setActiveView] = useState('dashboard');
         const [activeCategory, setActiveCategory] = useState('personal');
         const [completedTasks, setCompletedTasks] = useState({});
         const [impactScore, setImpactScore] = useState(0);
+        const [expandedTask, setExpandedTask] = useState(null);
+        const [quizStep, setQuizStep] = useState(0);
+        const [quizAnswers, setQuizAnswers] = useState({});
+        const [userProfile, setUserProfile] = useState({
+            name: '',
+            values: [],
+            causes: [],
+            givingGoal: 0
+        });
+
+        // Peace of Mind Critical Tasks
+        const criticalTasks = ['f1', 'f2', 'f4', 'b2']; // Will, Insurance, Assets, Succession
 
         const categories = {
             personal: {
@@ -52,23 +70,166 @@
                 icon: 'user-plus',
                 color: 'bg-purple-500',
                 tasks: [
-                    { id: 'p1', title: 'Define Your Core Values', impact: 10, description: 'Identify 5 core values that guide your life' },
-                    { id: 'p2', title: 'Write Your Life Story', impact: 15, description: 'Document your journey, challenges, and triumphs' },
-                    { id: 'p3', title: 'Create a Vision Statement', impact: 10, description: 'Define what legacy means to you' },
-                    { id: 'p4', title: 'Record Video Messages', impact: 20, description: 'Create videos for future generations' },
-                    { id: 'p5', title: 'Document Family History', impact: 15, description: 'Preserve family stories and traditions' }
+                    { 
+                        id: 'p1', 
+                        title: 'Define Your Core Values', 
+                        impact: 10, 
+                        description: 'Identify 5 core values that guide your life',
+                        steps: [
+                            'Set aside 30 minutes of quiet reflection time',
+                            'Review our comprehensive values list',
+                            'Select your top 10, then narrow to 5',
+                            'Write why each value matters to you',
+                            'Download your Values Certificate'
+                        ],
+                        action: {
+                            type: 'interactive',
+                            label: 'Start Values Assessment',
+                            component: 'ValuesAssessment'
+                        },
+                        peaceOfMind: 'Creates clarity for all future decisions'
+                    },
+                    { 
+                        id: 'p2', 
+                        title: 'Write Your Life Story', 
+                        impact: 15, 
+                        description: 'Document your journey for future generations',
+                        steps: [
+                            'Use our guided story prompts',
+                            'Record 5-minute audio segments',
+                            'Add photos to each chapter',
+                            'Auto-save to secure cloud storage',
+                            'Share with selected family members'
+                        ],
+                        action: {
+                            type: 'template',
+                            label: 'Open Story Builder',
+                            template: 'lifeStoryTemplate'
+                        },
+                        peaceOfMind: 'Preserves your wisdom and experiences forever'
+                    },
+                    { 
+                        id: 'p3', 
+                        title: 'Create Legacy Vision Statement', 
+                        impact: 10, 
+                        description: 'Define how you want to be remembered',
+                        action: {
+                            type: 'guided',
+                            label: 'Launch Vision Workshop'
+                        }
+                    },
+                    { 
+                        id: 'p4', 
+                        title: 'Record Video Messages', 
+                        impact: 20, 
+                        description: 'Create meaningful videos for loved ones',
+                        steps: [
+                            'Choose from our conversation starters',
+                            'Record directly in the app',
+                            'Set delivery dates (birthdays, milestones)',
+                            'Encrypted storage with backup',
+                            'Preview and re-record anytime'
+                        ],
+                        action: {
+                            type: 'tool',
+                            label: 'Open Video Recorder'
+                        }
+                    },
+                    { 
+                        id: 'p5', 
+                        title: 'Build Family Tree & History', 
+                        impact: 15, 
+                        description: 'Connect past, present, and future',
+                        action: {
+                            type: 'interactive',
+                            label: 'Family Tree Builder'
+                        }
+                    }
                 ]
             },
             financial: {
-                title: 'Financial Planning',
+                title: 'Financial Security',
                 icon: 'dollar-sign',
                 color: 'bg-green-500',
                 tasks: [
-                    { id: 'f1', title: 'Create a Will', impact: 25, description: 'Ensure your wishes are documented legally' },
-                    { id: 'f2', title: 'Set Up Life Insurance', impact: 20, description: 'Protect your family\'s financial future' },
-                    { id: 'f3', title: 'Start an Education Fund', impact: 15, description: 'Invest in future generations\' education' },
-                    { id: 'f4', title: 'Document All Assets', impact: 10, description: 'Create a comprehensive asset inventory' },
-                    { id: 'f5', title: 'Plan Charitable Giving', impact: 20, description: 'Allocate funds for causes you care about' }
+                    { 
+                        id: 'f1', 
+                        title: 'Create Your Will', 
+                        impact: 25, 
+                        description: 'Protect your family with proper documentation',
+                        critical: true,
+                        steps: [
+                            'Complete our will preparation checklist',
+                            'Use our attorney-reviewed templates',
+                            'Schedule free consultation call',
+                            'E-sign with built-in witnesses',
+                            'Secure storage with access codes'
+                        ],
+                        action: {
+                            type: 'wizard',
+                            label: 'Start Will Creator',
+                            component: 'WillWizard'
+                        },
+                        peaceOfMind: '✓ Ensures your wishes are legally protected'
+                    },
+                    { 
+                        id: 'f2', 
+                        title: 'Life Insurance Review', 
+                        impact: 20, 
+                        description: 'Ensure adequate family protection',
+                        critical: true,
+                        steps: [
+                            'Calculate needs with our tool',
+                            'Compare quotes from 5+ providers',
+                            'Understand term vs whole life',
+                            'Annual review reminders',
+                            'Beneficiary update alerts'
+                        ],
+                        action: {
+                            type: 'calculator',
+                            label: 'Insurance Calculator'
+                        },
+                        peaceOfMind: '✓ Guarantees financial security for loved ones'
+                    },
+                    { 
+                        id: 'f3', 
+                        title: 'Education Fund Setup', 
+                        impact: 15, 
+                        description: 'Invest in the next generation',
+                        action: {
+                            type: 'guide',
+                            label: '529 Plan Guide'
+                        }
+                    },
+                    { 
+                        id: 'f4', 
+                        title: 'Complete Asset Inventory', 
+                        impact: 10, 
+                        description: 'Document everything in one secure place',
+                        critical: true,
+                        steps: [
+                            'Auto-import from financial institutions',
+                            'Photograph important documents',
+                            'Include digital assets & passwords',
+                            'Grant emergency access to trusted person',
+                            'Automatic quarterly updates'
+                        ],
+                        action: {
+                            type: 'dashboard',
+                            label: 'Asset Dashboard'
+                        },
+                        peaceOfMind: '✓ Everything organized for your family'
+                    },
+                    { 
+                        id: 'f5', 
+                        title: 'Charitable Giving Plan', 
+                        impact: 20, 
+                        description: 'Maximize your philanthropic impact',
+                        action: {
+                            type: 'planner',
+                            label: 'Giving Strategy Planner'
+                        }
+                    }
                 ]
             },
             community: {
@@ -76,45 +237,261 @@
                 icon: 'users',
                 color: 'bg-blue-500',
                 tasks: [
-                    { id: 'c1', title: 'Volunteer Monthly', impact: 25, description: 'Dedicate time to local organizations' },
-                    { id: 'c2', title: 'Mentor Someone', impact: 30, description: 'Share your expertise with others' },
-                    { id: 'c3', title: 'Start a Community Project', impact: 35, description: 'Create lasting change in your area' },
-                    { id: 'c4', title: 'Join a Nonprofit Board', impact: 25, description: 'Guide organizations making a difference' },
-                    { id: 'c5', title: 'Organize Fundraising Events', impact: 20, description: 'Rally support for important causes' }
+                    { 
+                        id: 'c1', 
+                        title: 'Monthly Volunteer Commitment', 
+                        impact: 25, 
+                        description: 'Make regular community impact',
+                        steps: [
+                            'Match with local opportunities via our network',
+                            'Track hours and impact metrics',
+                            'Share experiences with community',
+                            'Earn recognition badges',
+                            'Annual impact report for taxes'
+                        ],
+                        action: {
+                            type: 'matching',
+                            label: 'Find Opportunities'
+                        }
+                    },
+                    { 
+                        id: 'c2', 
+                        title: 'Become a Mentor', 
+                        impact: 30, 
+                        description: 'Shape someone\'s future',
+                        action: {
+                            type: 'program',
+                            label: 'Mentor Matching'
+                        }
+                    },
+                    { 
+                        id: 'c3', 
+                        title: 'Launch Community Project', 
+                        impact: 35, 
+                        description: 'Create lasting local change',
+                        action: {
+                            type: 'toolkit',
+                            label: 'Project Starter Kit'
+                        }
+                    },
+                    { 
+                        id: 'c4', 
+                        title: 'Nonprofit Board Service', 
+                        impact: 25, 
+                        description: 'Guide organizations strategically',
+                        action: {
+                            type: 'training',
+                            label: 'Board Ready Training'
+                        }
+                    },
+                    { 
+                        id: 'c5', 
+                        title: 'Fundraising Leadership', 
+                        impact: 20, 
+                        description: 'Amplify causes you care about',
+                        action: {
+                            type: 'platform',
+                            label: 'Fundraising Hub'
+                        }
+                    }
                 ]
             },
             business: {
-                title: 'Business & Career',
+                title: 'Business Legacy',
                 icon: 'briefcase',
                 color: 'bg-orange-500',
                 tasks: [
-                    { id: 'b1', title: 'Document Business Processes', impact: 15, description: 'Create systems that outlast you' },
-                    { id: 'b2', title: 'Develop Succession Plan', impact: 25, description: 'Ensure business continuity' },
-                    { id: 'b3', title: 'Share Your Expertise', impact: 20, description: 'Write articles, speak at events' },
-                    { id: 'b4', title: 'Create Training Programs', impact: 25, description: 'Develop the next generation' },
-                    { id: 'b5', title: 'Build Strategic Partnerships', impact: 15, description: 'Create lasting business relationships' }
+                    { 
+                        id: 'b1', 
+                        title: 'Document Key Processes', 
+                        impact: 15, 
+                        description: 'Preserve your business knowledge',
+                        steps: [
+                            'Process mapping templates',
+                            'Video recording walkthroughs',
+                            'Employee training modules',
+                            'Knowledge base creation',
+                            'Annual update reminders'
+                        ],
+                        action: {
+                            type: 'system',
+                            label: 'Process Documenter'
+                        },
+                        peaceOfMind: 'Business continues smoothly without you'
+                    },
+                    { 
+                        id: 'b2', 
+                        title: 'Succession Planning', 
+                        impact: 25, 
+                        description: 'Secure your business future',
+                        critical: true,
+                        steps: [
+                            'Succession readiness assessment',
+                            'Identify and develop successors',
+                            'Legal documentation templates',
+                            'Transition timeline builder',
+                            'Stakeholder communication plans'
+                        ],
+                        action: {
+                            type: 'strategic',
+                            label: 'Succession Planner'
+                        },
+                        peaceOfMind: '✓ Your business legacy is protected'
+                    },
+                    { 
+                        id: 'b3', 
+                        title: 'Thought Leadership Platform', 
+                        impact: 20, 
+                        description: 'Share your expertise widely',
+                        action: {
+                            type: 'publishing',
+                            label: 'Content Platform'
+                        }
+                    },
+                    { 
+                        id: 'b4', 
+                        title: 'Training Program Development', 
+                        impact: 25, 
+                        description: 'Scale your knowledge transfer',
+                        action: {
+                            type: 'course',
+                            label: 'Course Builder'
+                        }
+                    },
+                    { 
+                        id: 'b5', 
+                        title: 'Strategic Partnerships', 
+                        impact: 15, 
+                        description: 'Build lasting business relationships',
+                        action: {
+                            type: 'network',
+                            label: 'Partnership Portal'
+                        }
+                    }
                 ]
             },
             philanthropy: {
-                title: 'Philanthropic Goals',
+                title: 'Giving Strategy',
                 icon: 'heart',
                 color: 'bg-red-500',
                 tasks: [
-                    { id: 'ph1', title: 'Choose Focus Causes', impact: 10, description: 'Identify 3 causes you\'re passionate about' },
-                    { id: 'ph2', title: 'Set Annual Giving Goals', impact: 15, description: 'Commit to regular charitable contributions' },
-                    { id: 'ph3', title: 'Create a Giving Circle', impact: 25, description: 'Multiply impact through collective giving' },
-                    { id: 'ph4', title: 'Establish a Scholarship', impact: 30, description: 'Support education in your community' },
-                    { id: 'ph5', title: 'Plan Legacy Donation', impact: 25, description: 'Include charities in your will' }
+                    { 
+                        id: 'ph1', 
+                        title: 'Define Giving Focus', 
+                        impact: 10, 
+                        description: 'Align giving with your values',
+                        steps: [
+                            'Take our Cause Matcher quiz',
+                            'Research impact metrics',
+                            'Connect with charity leaders',
+                            'Site visits (virtual available)',
+                            'Create giving statement'
+                        ],
+                        action: {
+                            type: 'quiz',
+                            label: 'Find Your Causes'
+                        }
+                    },
+                    { 
+                        id: 'ph2', 
+                        title: 'Annual Giving Strategy', 
+                        impact: 15, 
+                        description: 'Maximize your impact',
+                        action: {
+                            type: 'calculator',
+                            label: 'Giving Calculator'
+                        }
+                    },
+                    { 
+                        id: 'ph3', 
+                        title: 'Start a Giving Circle', 
+                        impact: 25, 
+                        description: 'Multiply impact with others',
+                        action: {
+                            type: 'community',
+                            label: 'Circle Starter'
+                        }
+                    },
+                    { 
+                        id: 'ph4', 
+                        title: 'Create a Scholarship', 
+                        impact: 30, 
+                        description: 'Invest in future leaders',
+                        steps: [
+                            'Define criteria and values alignment',
+                            'Partner with schools/organizations',
+                            'Set up fund management',
+                            'Create application process',
+                            'Meet your scholars annually'
+                        ],
+                        action: {
+                            type: 'fund',
+                            label: 'Scholarship Builder'
+                        }
+                    },
+                    { 
+                        id: 'ph5', 
+                        title: 'Legacy Giving Plan', 
+                        impact: 25, 
+                        description: 'Extend impact beyond lifetime',
+                        action: {
+                            type: 'estate',
+                            label: 'Legacy Planner'
+                        }
+                    }
                 ]
             }
         };
 
+        // Quiz questions for personalization
+        const quizQuestions = [
+            {
+                question: "What drives your desire to create a legacy?",
+                options: [
+                    { value: 'family', label: 'Providing for my family' },
+                    { value: 'community', label: 'Making community impact' },
+                    { value: 'values', label: 'Passing on my values' },
+                    { value: 'business', label: 'Preserving my life\'s work' }
+                ]
+            },
+            {
+                question: "What causes resonate most with you?",
+                options: [
+                    { value: 'education', label: 'Education & Youth Development' },
+                    { value: 'health', label: 'Health & Medical Research' },
+                    { value: 'environment', label: 'Environment & Sustainability' },
+                    { value: 'social', label: 'Social Justice & Equality' },
+                    { value: 'arts', label: 'Arts & Culture' },
+                    { value: 'animals', label: 'Animal Welfare' }
+                ]
+            },
+            {
+                question: "What's your current life stage?",
+                options: [
+                    { value: 'building', label: 'Building career/family (20s-40s)' },
+                    { value: 'established', label: 'Established professional (40s-60s)' },
+                    { value: 'transition', label: 'Approaching retirement (60s+)' },
+                    { value: 'retired', label: 'Retired and reflecting' }
+                ]
+            },
+            {
+                question: "How much time can you dedicate monthly to legacy building?",
+                options: [
+                    { value: '2', label: '2-5 hours' },
+                    { value: '5', label: '5-10 hours' },
+                    { value: '10', label: '10-20 hours' },
+                    { value: '20', label: '20+ hours' }
+                ]
+            }
+        ];
+
         useEffect(() => {
-            // Load saved data from localStorage
+            // Load saved data
             const saved = localStorage.getItem('legacyAppData');
             if (saved) {
                 const data = JSON.parse(saved);
                 setCompletedTasks(data.completedTasks || {});
+                setUserProfile(data.userProfile || userProfile);
             }
         }, []);
 
@@ -128,8 +505,11 @@
             setImpactScore(totalImpact);
 
             // Save to localStorage
-            localStorage.setItem('legacyAppData', JSON.stringify({ completedTasks }));
-        }, [completedTasks]);
+            localStorage.setItem('legacyAppData', JSON.stringify({ 
+                completedTasks, 
+                userProfile 
+            }));
+        }, [completedTasks, userProfile]);
 
         const toggleTask = (taskId) => {
             setCompletedTasks(prev => ({
@@ -144,6 +524,15 @@
             return Math.round((completed / totalTasks) * 100);
         };
 
+        const getCriticalTasksStatus = () => {
+            const completed = criticalTasks.filter(id => completedTasks[id]).length;
+            return {
+                completed,
+                total: criticalTasks.length,
+                percentage: Math.round((completed / criticalTasks.length) * 100)
+            };
+        };
+
         const getImpactLevel = () => {
             if (impactScore < 100) return { level: 'Seedling', color: 'text-green-500' };
             if (impactScore < 200) return { level: 'Growing', color: 'text-blue-500' };
@@ -151,175 +540,151 @@
             return { level: 'Legacy Leader', color: 'text-yellow-500' };
         };
 
-        return (
-            <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4">
-                <div className="max-w-7xl mx-auto">
-                    {/* Header */}
-                    <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
-                        <div className="flex flex-col md:flex-row items-center justify-between mb-4">
+        const handleQuizAnswer = (value) => {
+            setQuizAnswers({ ...quizAnswers, [quizStep]: value });
+            if (quizStep < quizQuestions.length - 1) {
+                setQuizStep(quizStep + 1);
+            } else {
+                // Quiz complete - generate recommendations
+                generateRecommendations();
+            }
+        };
+
+        const generateRecommendations = () => {
+            // Based on quiz answers, create personalized recommendations
+            const recommendations = {
+                primaryFocus: quizAnswers[0],
+                causes: [quizAnswers[1]],
+                urgentTasks: quizAnswers[2] === 'transition' || quizAnswers[2] === 'retired' 
+                    ? ['f1', 'f2', 'b2'] 
+                    : ['p1', 'f4', 'c1'],
+                timeCommitment: parseInt(quizAnswers[3])
+            };
+            
+            setUserProfile({
+                ...userProfile,
+                recommendations,
+                quizComplete: true
+            });
+            setActiveView('dashboard');
+        };
+
+        const renderQuiz = () => (
+            <div className="bg-white rounded-2xl shadow-lg p-8 max-w-2xl mx-auto">
+                <div className="mb-6">
+                    <div className="flex justify-between items-center mb-2">
+                        <h2 className="text-2xl font-bold text-gray-800">Personalize Your Legacy Journey</h2>
+                        <span className="text-sm text-gray-500">
+                            Question {quizStep + 1} of {quizQuestions.length}
+                        </span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div 
+                            className="bg-purple-500 h-2 rounded-full transition-all"
+                            style={{ width: `${((quizStep + 1) / quizQuestions.length) * 100}%` }}
+                        />
+                    </div>
+                </div>
+
+                <div className="mb-8">
+                    <h3 className="text-lg font-medium text-gray-800 mb-4">
+                        {quizQuestions[quizStep].question}
+                    </h3>
+                    <div className="space-y-3">
+                        {quizQuestions[quizStep].options.map((option) => (
+                            <button
+                                key={option.value}
+                                onClick={() => handleQuizAnswer(option.value)}
+                                className="w-full text-left p-4 rounded-xl border-2 border-gray-200 hover:border-purple-500 hover:bg-purple-50 transition-all"
+                            >
+                                {option.label}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {quizStep > 0 && (
+                    <button
+                        onClick={() => setQuizStep(quizStep - 1)}
+                        className="text-gray-500 hover:text-gray-700"
+                    >
+                        ← Back
+                    </button>
+                )}
+            </div>
+        );
+
+        const renderDashboard = () => (
+            <div className="space-y-6">
+                {/* Peace of Mind Tracker */}
+                <div className="bg-white rounded-2xl shadow-lg p-6">
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                            <Icon name="shield" className="w-8 h-8 text-green-500" />
                             <div>
-                                <h1 className="text-3xl font-bold text-gray-800">Legacy Creation Journey</h1>
-                                <p className="text-gray-600 mt-2">Build and live your legacy today</p>
+                                <h2 className="text-xl font-bold text-gray-800">Peace of Mind Status</h2>
+                                <p className="text-sm text-gray-600">Critical tasks for family protection</p>
                             </div>
-                            <div className="text-center mt-4 md:mt-0">
+                        </div>
+                        <div className="text-center">
+                            <div className="text-3xl font-bold text-green-600">
+                                {getCriticalTasksStatus().percentage}%
+                            </div>
+                            <div className="text-sm text-gray-500">Protected</div>
+                        </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {criticalTasks.map(taskId => {
+                            const task = Object.values(categories)
+                                .flatMap(cat => cat.tasks)
+                                .find(t => t.id === taskId);
+                            return (
+                                <div
+                                    key={taskId}
+                                    className={`p-3 rounded-lg border-2 ${
+                                        completedTasks[taskId]
+                                            ? 'bg-green-50 border-green-300'
+                                            : 'bg-red-50 border-red-300'
+                                    }`}
+                                >
+                                    <Icon 
+                                        name={completedTasks[taskId] ? 'check-circle' : 'circle'}
+                                        className={`w-6 h-6 mb-2 ${
+                                            completedTasks[taskId] ? 'text-green-500' : 'text-red-400'
+                                        }`}
+                                    />
+                                    <div className="text-xs font-medium text-gray-700">
+                                        {task?.title}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                {/* Main Header */}
+                <div className="bg-white rounded-2xl shadow-lg p-6">
+                    <div className="flex flex-col md:flex-row items-center justify-between mb-4">
+                        <div>
+                            <h1 className="text-3xl font-bold text-gray-800">Your Legacy Dashboard</h1>
+                            <p className="text-gray-600 mt-2">Building a legacy that lives alongside you</p>
+                        </div>
+                        <div className="flex gap-4 mt-4 md:mt-0">
+                            <div className="text-center">
                                 <div className="text-3xl font-bold text-purple-600">{getCompletionPercentage()}%</div>
                                 <div className="text-sm text-gray-500">Complete</div>
                             </div>
-                        </div>
-
-                        {/* Impact Score */}
-                        <div className="bg-gradient-to-r from-purple-100 to-blue-100 rounded-xl p-4 mt-4">
-                            <div className="flex flex-col md:flex-row items-center justify-between">
-                                <div>
-                                    <div className="text-sm text-gray-600">Your Impact Score</div>
-                                    <div className="text-2xl font-bold text-gray-800">{impactScore} points</div>
-                                </div>
-                                <div className="text-center md:text-right mt-4 md:mt-0">
-                                    <div className={`text-lg font-semibold ${getImpactLevel().color}`}>
-                                        {getImpactLevel().level}
-                                    </div>
-                                    <div className="text-xs text-gray-500">Keep growing your legacy!</div>
-                                </div>
+                            <div className="text-center">
+                                <div className="text-3xl font-bold text-blue-600">{impactScore}</div>
+                                <div className="text-sm text-gray-500">Impact Points</div>
                             </div>
                         </div>
                     </div>
 
-                    {/* Category Tabs */}
-                    <div className="bg-white rounded-2xl shadow-lg p-2 mb-6">
-                        <div className="flex flex-wrap gap-2">
-                            {Object.entries(categories).map(([key, category]) => (
-                                <button
-                                    key={key}
-                                    onClick={() => setActiveCategory(key)}
-                                    className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all ${
-                                        activeCategory === key
-                                            ? `${category.color} text-white`
-                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                    }`}
-                                >
-                                    <Icon name={category.icon} className="w-5 h-5" />
-                                    <span className="font-medium">{category.title}</span>
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Main Content */}
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        {/* Tasks Section */}
-                        <div className="lg:col-span-2 bg-white rounded-2xl shadow-lg p-6">
-                            <h2 className="text-xl font-bold text-gray-800 mb-4">
-                                {categories[activeCategory].title} Tasks
-                            </h2>
-                            <div className="space-y-3">
-                                {categories[activeCategory].tasks.map((task) => (
-                                    <div
-                                        key={task.id}
-                                        className={`border rounded-xl p-4 cursor-pointer transition-all ${
-                                            completedTasks[task.id]
-                                                ? 'bg-green-50 border-green-300'
-                                                : 'bg-gray-50 border-gray-200 hover:border-gray-300'
-                                        }`}
-                                        onClick={() => toggleTask(task.id)}
-                                    >
-                                        <div className="flex items-start gap-3">
-                                            <Icon 
-                                                name={completedTasks[task.id] ? 'check-circle' : 'circle'} 
-                                                className={`w-6 h-6 mt-0.5 ${completedTasks[task.id] ? 'text-green-500' : 'text-gray-400'}`} 
-                                            />
-                                            <div className="flex-1">
-                                                <div className="font-medium text-gray-800">{task.title}</div>
-                                                <div className="text-sm text-gray-600 mt-1">{task.description}</div>
-                                                <div className="flex items-center gap-2 mt-2">
-                                                    <Icon name="trending-up" className="w-4 h-4 text-purple-500" />
-                                                    <span className="text-sm text-purple-600 font-medium">
-                                                        +{task.impact} Impact Points
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Impact Visualization */}
-                        <div className="space-y-6">
-                            {/* Your Legacy Path */}
-                            <div className="bg-white rounded-2xl shadow-lg p-6">
-                                <h3 className="text-lg font-bold text-gray-800 mb-4">Your Legacy Path</h3>
-                                <div className="space-y-3">
-                                    {['Define Values', 'Take Action', 'Build Community', 'Create Impact', 'Leave Legacy'].map((step, index) => {
-                                        const isActive = getCompletionPercentage() >= (index + 1) * 20;
-                                        return (
-                                            <div key={step} className="flex items-center gap-3">
-                                                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${
-                                                    isActive ? 'bg-purple-500 text-white' : 'bg-gray-200 text-gray-400'
-                                                }`}>
-                                                    {index + 1}
-                                                </div>
-                                                <span className={`font-medium ${isActive ? 'text-gray-800' : 'text-gray-400'}`}>
-                                                    {step}
-                                                </span>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-
-                            {/* Quick Actions */}
-                            <div className="bg-white rounded-2xl shadow-lg p-6">
-                                <h3 className="text-lg font-bold text-gray-800 mb-4">Quick Actions</h3>
-                                <div className="space-y-2">
-                                    <button className="w-full bg-purple-100 text-purple-700 rounded-xl p-3 text-sm font-medium hover:bg-purple-200 transition-colors flex items-center justify-center">
-                                        <Icon name="calendar" className="w-4 h-4 mr-2" />
-                                        Schedule Volunteer Time
-                                    </button>
-                                    <button className="w-full bg-green-100 text-green-700 rounded-xl p-3 text-sm font-medium hover:bg-green-200 transition-colors flex items-center justify-center">
-                                        <Icon name="dollar-sign" className="w-4 h-4 mr-2" />
-                                        Set Up Monthly Giving
-                                    </button>
-                                    <button className="w-full bg-blue-100 text-blue-700 rounded-xl p-3 text-sm font-medium hover:bg-blue-200 transition-colors flex items-center justify-center">
-                                        <Icon name="share-2" className="w-4 h-4 mr-2" />
-                                        Share Your Story
-                                    </button>
-                                </div>
-                            </div>
-
-                            {/* Impact Summary */}
-                            <div className="bg-gradient-to-br from-purple-500 to-blue-500 rounded-2xl shadow-lg p-6 text-white">
-                                <h3 className="text-lg font-bold mb-4">Your Future Impact</h3>
-                                <div className="space-y-3 text-sm">
-                                    <div className="flex items-center gap-2">
-                                        <Icon name="award" className="w-5 h-5" />
-                                        <span>Lives touched: {Math.floor(impactScore / 10)}</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <Icon name="building-2" className="w-5 h-5" />
-                                        <span>Communities served: {Math.floor(impactScore / 50)}</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <Icon name="heart" className="w-5 h-5" />
-                                        <span>Legacy strength: {getImpactLevel().level}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Footer */}
-                    <div className="mt-8 text-center text-sm text-gray-500">
-                        <p>Build your legacy while you live. Every action counts.</p>
-                    </div>
-                </div>
-            </div>
-        );
-    };
-
-    // Render the app
-    ReactDOM.render(<LegacyCreationApp />, document.getElementById('root'));
-</script>
+                    {/* Quick Actions */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
+                        <button
+                            onClick={() => setActiveView('giving')}
+                            className="bg-gradient-to-r from-purple-500
 ```
-
-</body>
-</html>
